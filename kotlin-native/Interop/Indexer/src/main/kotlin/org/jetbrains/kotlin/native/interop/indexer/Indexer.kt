@@ -1107,6 +1107,27 @@ public open class NativeIndexImpl(val library: NativeLibrary, val verbose: Boole
             else -> error(cursor.kind)
         }
 
+        var customName: String? = null
+        if (clang_Cursor_isObjcCustomNameMethod(cursor) != 0) {
+            memScoped {
+                val size = alloc<ULongVar>()
+                clang_Cursor_getObjcCustomNameMethodName(cursor, null, 0UL, size.ptr)
+                val bytes = allocArray<ByteVar>(size.value.toLong() + 1)
+                val didRead = clang_Cursor_getObjcCustomNameMethodName(cursor, bytes, size.value, size.ptr)
+                bytes[size.value.toInt()] = 0
+                if (didRead != 0) {
+                    val KN_REFINES_TAG = "Kotlin_Native_Refines:"
+                    customName = bytes.toKString().let {
+                        if (it.startsWith(KN_REFINES_TAG)) {
+                            it.substringAfter(KN_REFINES_TAG)
+                        } else {
+                            null
+                        }
+                    }
+                }
+            }
+        }
+
         return ObjCMethod(
                 selector, encoding, parameters, returnType,
                 isVariadic = clang_Cursor_isVariadic(cursor) != 0,
@@ -1115,7 +1136,8 @@ public open class NativeIndexImpl(val library: NativeLibrary, val verbose: Boole
                 nsReturnsRetained = clang_Cursor_isObjCReturningRetainedMethod(cursor) != 0,
                 isOptional = (clang_Cursor_isObjCOptional(cursor) != 0),
                 isInit = (clang_Cursor_isObjCInitMethod(cursor) != 0),
-                isExplicitlyDesignatedInitializer = hasAttribute(cursor, OBJC_DESGINATED_INITIALIZER)
+                isExplicitlyDesignatedInitializer = hasAttribute(cursor, OBJC_DESGINATED_INITIALIZER),
+                customName = customName
         )
     }
 

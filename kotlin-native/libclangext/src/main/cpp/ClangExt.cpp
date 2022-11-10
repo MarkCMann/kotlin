@@ -217,4 +217,34 @@ extern "C" {
     return 0;
   }
 
+  unsigned clang_Cursor_isObjcCustomNameMethod(CXCursor cursor) {
+#if LIBCLANGEXT_ENABLE
+    if (cursor.kind == CXCursor_ObjCInstanceMethodDecl || cursor.kind == CXCursor_ObjCClassMethodDecl) {
+      const Decl *decl = getCursorDecl(cursor);
+      if (const ObjCMethodDecl *methodDecl = dyn_cast_or_null<ObjCMethodDecl>(decl)) {
+        return methodDecl->hasAttr<AnnotateAttr>();
+      }
+    }
+#endif
+    return 0;
+  }
+
+  unsigned clang_Cursor_getObjcCustomNameMethodName(CXCursor cursor, void* buf, size_t buf_size, size_t* out_size) {
+#if LIBCLANGEXT_ENABLE
+    if (cursor.kind == CXCursor_ObjCInstanceMethodDecl || cursor.kind == CXCursor_ObjCClassMethodDecl) {
+      const Decl *decl = getCursorDecl(cursor);
+      if (const ObjCMethodDecl *methodDecl = dyn_cast_or_null<ObjCMethodDecl>(decl)) {
+        const auto& annotation_value = methodDecl->getAttr<AnnotateAttr>()->getAnnotation();
+        *out_size = annotation_value.size();
+        if (annotation_value.size() > buf_size) {
+          return 0;
+        }
+        memcpy(buf, annotation_value.data(), annotation_value.size());
+        return 1;
+      }
+    }
+#endif
+    return 0;
+  }
+
 }

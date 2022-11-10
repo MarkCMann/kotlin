@@ -1129,3 +1129,9 @@ JNIEXPORT jint JNICALL Java_clang_clang_kniBridge340 (JNIEnv* jniEnv, jclass jcl
 JNIEXPORT jint JNICALL Java_clang_clang_kniBridge341 (JNIEnv* jniEnv, jclass jclss, jlong p0) {
     return (jint)clang_Cursor_isObjCConsumingSelfMethod(*(CXCursor*)p0);
 }
+JNIEXPORT jint JNICALL Java_clang_clang_kniBridge342 (JNIEnv* jniEnv, jclass jclss, jlong p0) {
+    return (jint)clang_Cursor_isObjcCustomNameMethod(*(CXCursor*)p0);
+}
+JNIEXPORT jint JNICALL Java_clang_clang_kniBridge343 (JNIEnv* jniEnv, jclass jclss, jlong p0, jlong p1, jlong p2, jlong p3) {
+    return (jint)clang_Cursor_getObjcCustomNameMethodName(*(CXCursor*)p0, (void*)p1, (size_t)p2, (size_t*)p3);
+}

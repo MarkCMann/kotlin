@@ -55,6 +55,10 @@ unsigned clang_Cursor_isObjCReturningRetainedMethod(CXCursor cursor);
 
 unsigned clang_Cursor_isObjCConsumingSelfMethod(CXCursor cursor);
 
+unsigned clang_Cursor_isObjcCustomNameMethod(CXCursor cursor);
+
+unsigned clang_Cursor_getObjcCustomNameMethodName(CXCursor cursor, void* buf, size_t buf_size, size_t* out_size);
+
 #ifdef __cplusplus
 }
 #endif

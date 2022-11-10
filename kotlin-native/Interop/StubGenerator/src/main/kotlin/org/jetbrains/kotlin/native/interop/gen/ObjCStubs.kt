@@ -263,6 +263,10 @@ private fun ObjCMethod.isAlloc(): Boolean =
 
 internal val ObjCMethod.kotlinName: String
     get() {
+        val localCustomName = customName
+        if (localCustomName != null) {
+            return localCustomName
+        }
         val candidate = selector.split(":").first()
         val trimmed = candidate.trimEnd('_')
         return if (trimmed == "equals" && parameters.size == 1

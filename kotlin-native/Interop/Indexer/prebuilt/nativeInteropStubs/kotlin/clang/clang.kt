@@ -4039,6 +4039,18 @@ fun clang_Cursor_isObjCConsumingSelfMethod(cursor: CValue<CXCursor>): Int {
     }
 }
 
+fun clang_Cursor_isObjcCustomNameMethod(cursor: CValue<CXCursor>): Int {
+    memScoped {
+        return kniBridge342(cursor.getPointer(memScope).rawValue)
+    }
+}
+
+fun clang_Cursor_getObjcCustomNameMethodName(cursor: CValue<CXCursor>, buf: CPointer<ByteVar>?, buf_size: ULong, out_size: CPointer<ULongVar>): Int {
+    memScoped {
+        return kniBridge343(cursor.getPointer(memScope).rawValue, buf?.rawValue ?: nativeNullPtr, buf_size.toLong(), out_size.rawValue)
+    }
+}
+
 val CINDEX_VERSION_MAJOR: Int get() = 0
 
 val CINDEX_VERSION_MINOR: Int get() = 61
@@ -4929,4 +4941,6 @@ private external fun kniBridge338(p0: NativePtr, p1: Int, p2: NativePtr): Unit
 private external fun kniBridge339(p0: NativePtr): Int
 private external fun kniBridge340(p0: NativePtr): Int
 private external fun kniBridge341(p0: NativePtr): Int
+private external fun kniBridge342(p0: NativePtr): Int
+private external fun kniBridge343(p0: NativePtr, p1: NativePtr, p2: Long, p3: NativePtr): Int
 private val loadLibrary = loadKonanLibrary("clangstubs")
