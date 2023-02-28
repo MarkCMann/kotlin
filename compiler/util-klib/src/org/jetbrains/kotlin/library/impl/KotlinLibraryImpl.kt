@@ -96,7 +96,11 @@ abstract class IrLibraryImpl(
 }
 
 class IrMonoliticLibraryImpl(_access: IrLibraryAccess<IrKotlinLibraryLayout>) : IrLibraryImpl(_access) {
-    override fun fileCount(): Int = files.entryCount()
+    override fun fileCount(): Int = try {
+        files.entryCount()
+    } catch (e: java.nio.file.NoSuchFileException) {
+        0
+    }
 
     override fun irDeclaration(index: Int, fileIndex: Int) = loadIrDeclaration(index, fileIndex)
 

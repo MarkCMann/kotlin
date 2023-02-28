@@ -124,7 +124,11 @@ internal class DependenciesTrackerImpl(
                 library == null -> FileOrigin.CurrentFile
                 packageFragment.packageFragmentDescriptor.containingDeclaration.isFromInteropLibrary() ->
                     FileOrigin.EntireModule(library)
-                else -> FileOrigin.CertainFile(library, packageFragment.fqName.asString(), filePathGetter())
+                else -> try {
+                    FileOrigin.CertainFile(library, packageFragment.fqName.asString(), filePathGetter())
+                } catch (e: java.lang.IllegalStateException) {
+                    FileOrigin.EntireModule(library)
+                }
             }
         }
     }
