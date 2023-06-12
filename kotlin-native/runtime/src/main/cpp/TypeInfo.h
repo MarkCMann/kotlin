@@ -170,8 +170,11 @@ struct TypeInfo {
 #ifdef __cplusplus
 extern "C" {
 #endif
-InterfaceTableRecord const* LookupInterfaceTableRecord(InterfaceTableRecord const* interfaceTable,
-                                                       int interfaceTableSize, ClassId interfaceId) RUNTIME_CONST;
+InterfaceTableRecord const* LookupInterfaceTableRecord(TypeInfo const* typeInfo, int interfaceTableSize, ClassId interfaceId) RUNTIME_NOTHROW __attribute__((noinline));
+
+InterfaceTableRecord const* SanitizedInterfaceTableRecord(TypeInfo const* typeInfo, int interfaceTableIndex) RUNTIME_NOTHROW;
+
+VTableElement LookupInterfaceMethodVTableRecord(TypeInfo const* typeInfo, InterfaceTableRecord const* interfaceRecord, int methodIndex, ClassId interfaceId) RUNTIME_NOTHROW __attribute__((noinline));
 
 #ifdef __cplusplus
 } // extern "C"

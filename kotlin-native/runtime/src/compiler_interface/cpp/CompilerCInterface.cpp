@@ -53,6 +53,8 @@ touchFunction(FreezeSubgraph)
 touchFunction(CheckGlobalsAccessible)
 
 touchFunction(LookupInterfaceTableRecord)
+touchFunction(LookupInterfaceMethodVTableRecord)
+touchFunction(SanitizedInterfaceTableRecord)
 touchFunction(IsSubtype)
 touchFunction(IsSubclassFast)
 

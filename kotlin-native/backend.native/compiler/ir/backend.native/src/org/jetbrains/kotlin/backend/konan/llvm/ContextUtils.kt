@@ -426,6 +426,8 @@ internal class CodegenLlvmHelpers(private val generationState: NativeGenerationS
     val setCurrentFrameFunction = importRtFunction("SetCurrentFrame")
     val checkCurrentFrameFunction = importRtFunction("CheckCurrentFrame")
     val lookupInterfaceTableRecord = importRtFunction("LookupInterfaceTableRecord")
+    val lookupInterfaceMethodVTableRecord = importRtFunction("LookupInterfaceMethodVTableRecord")
+    val sanitizedInterfaceTableRecord = importRtFunction("SanitizedInterfaceTableRecord")
     val isSubtypeFunction = importRtFunction("IsSubtype")
     val isSubclassFastFunction = importRtFunction("IsSubclassFast")
     val throwExceptionFunction = importRtFunction("ThrowException")

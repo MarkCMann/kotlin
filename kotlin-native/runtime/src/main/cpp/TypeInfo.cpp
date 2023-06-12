@@ -20,16 +20,19 @@
 #include "Types.h"
 #include "KString.h"
 
+#include <exception>
+#include <iostream>
+
 extern "C" {
 
 // Seeks for the specified id. In case of failure returns a valid pointer to some record, never returns nullptr.
 // It is the caller's responsibility to check if the search has succeeded or not.
-InterfaceTableRecord const* LookupInterfaceTableRecord(InterfaceTableRecord const* interfaceTable,
-                                                       int interfaceTableSize, ClassId interfaceId) {
+RUNTIME_NOTHROW InterfaceTableRecord const* LookupInterfaceTableRecord(TypeInfo const* typeInfo, int interfaceTableSize, ClassId interfaceId) {
+  InterfaceTableRecord const* interfaceTable = typeInfo->interfaceTable_;
   if (interfaceTableSize <= 8) {
     // Linear search.
     int i;
-    for (i = 0; i < interfaceTableSize - 1 && interfaceTable[i].id < interfaceId; ++i);
+    for (i = 0; i < interfaceTableSize - 1 && interfaceTable[i].id < interfaceId; ++i) {}
     return interfaceTable + i;
   }
   int l = 0, r = interfaceTableSize - 1;
@@ -42,6 +45,12 @@ InterfaceTableRecord const* LookupInterfaceTableRecord(InterfaceTableRecord cons
   return interfaceTable + l;
 }
 
+RUNTIME_NOTHROW VTableElement LookupInterfaceMethodVTableRecord(TypeInfo const* typeInfo, InterfaceTableRecord const* interfaceRecord, int methodIndex, ClassId interfaceId) {
+  RuntimeAssert(interfaceRecord != nullptr, "Dereferencing nullptr to interface record.");
+  RuntimeAssert(interfaceRecord->id == interfaceId, "Dereferencing pointer to interface record that doesn't match interface id");
+  return interfaceRecord->vtable[methodIndex];
+}
+
 RUNTIME_NOTHROW int Kotlin_internal_reflect_getObjectReferenceFieldsCount(ObjHeader* object) {
     auto *info = object->type_info();
     if (info->IsArray()) return 0;
@@ -50,6 +59,12 @@ RUNTIME_NOTHROW int Kotlin_internal_reflect_getObjectReferenceFieldsCount(ObjHea
 
 RUNTIME_NOTHROW OBJ_GETTER(Kotlin_internal_reflect_getObjectReferenceFieldByIndex, ObjHeader* object, int index) {
     RETURN_OBJ(*reinterpret_cast<ObjHeader**>(reinterpret_cast<uintptr_t>(object) + object->type_info()->objOffsets_[index]));
+}
+
+RUNTIME_NOTHROW InterfaceTableRecord const* SanitizedInterfaceTableRecord(TypeInfo const* typeInfo, int interfaceTableIndex) {
+  RuntimeAssert(typeInfo->interfaceTable_ != nullptr, "Interface table is null");
+  RuntimeAssert(interfaceTableIndex < typeInfo->interfaceTableSize_, "Interface table index out of range.");
+  return (typeInfo->interfaceTable_ + interfaceTableIndex);
 }
 
 }

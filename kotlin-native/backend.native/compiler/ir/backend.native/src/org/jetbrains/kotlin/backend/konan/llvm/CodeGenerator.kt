@@ -219,7 +219,7 @@ internal object VirtualTablesLookup {
         fun fastPath(): LLVMValueRef {
             // The fastest optimistic version.
             val interfaceTableIndex = and(interfaceTableSize, llvm.int32(interfaceId))
-            return gep(interfaceTable, interfaceTableIndex)
+            return call(llvm.sanitizedInterfaceTableRecord, listOf(typeInfo, interfaceTableIndex))
         }
 
         // See details in ClassLayoutBuilder.
@@ -245,7 +245,7 @@ internal object VirtualTablesLookup {
             appendingTo(slowPathBB) {
                 val actualInterfaceTableSize = sub(llvm.kImmInt32Zero, interfaceTableSize) // -interfaceTableSize
                 val slowValue = call(llvm.lookupInterfaceTableRecord,
-                        listOf(interfaceTable, actualInterfaceTableSize, llvm.int32(interfaceId)))
+                        listOf(typeInfo, actualInterfaceTableSize, llvm.int32(interfaceId)))
                 br(takeResBB)
                 addPhiIncoming(resultPhi, currentBlock to slowValue)
             }
@@ -295,7 +295,12 @@ internal object VirtualTablesLookup {
                 // Essentially: typeInfo.itable[place(interfaceId)].vtable[method]
                 val itablePlace = layoutBuilder.itablePlace(irFunction)
                 val interfaceTableRecord = getInterfaceTableRecord(typeInfoPtr, itablePlace.interfaceId)
-                load(gep(load(structGep(interfaceTableRecord, 2 /* vtable */)), llvm.int32(itablePlace.methodIndex)))
+                val result = call(
+                    llvm.lookupInterfaceMethodVTableRecord,
+                    listOf(typeInfoPtr, interfaceTableRecord, llvm.int32(itablePlace.methodIndex), llvm.int32(itablePlace.interfaceId))
+                )
+                //load(gep(load(structGep(interfaceTableRecord, 2 /* vtable */)), llvm.int32(itablePlace.methodIndex)))
+                result
             }
         }
         val functionPtrType = pointerType(codegen.getLlvmFunctionType(irFunction))
