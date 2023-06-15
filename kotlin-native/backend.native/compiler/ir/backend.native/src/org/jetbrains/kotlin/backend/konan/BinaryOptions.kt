@@ -23,6 +23,8 @@ object BinaryOptions : BinaryOptionRegistry() {
 
     val stripDebugInfoFromNativeLibs by booleanOption()
 
+    val removeHiddenFromRootSet by booleanOption()
+
     val sourceInfoType by option<SourceInfoType>()
 
     val androidProgramType by option<AndroidProgramType>()

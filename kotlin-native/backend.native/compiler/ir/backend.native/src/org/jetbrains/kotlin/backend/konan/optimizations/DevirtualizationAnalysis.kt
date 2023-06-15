@@ -53,14 +53,24 @@ internal object DevirtualizationAnalysis {
             return this
         }
 
+        fun DataFlowIR.FunctionSymbol.shouldExport(): Boolean {
+            return !context.config.configuration.getBoolean(BinaryOptions.removeHiddenFromRootSet) ||
+                this.irDeclaration?.let {
+                    (it.annotations.any {
+                        annotation -> annotation.symbol.owner.parentAsClass.fqNameWhenAvailable?.toString() == "kotlin.native.HiddenFromObjC"
+                    } != true) || 
+                    ((it.parent as? IrClass)?.modality == org.jetbrains.kotlin.descriptors.Modality.ABSTRACT)
+                } == true
+        }
+
         val entryPoint = context.ir.symbols.entryPoint?.owner
         val exported = if (entryPoint != null)
             listOf(moduleDFG.symbolTable.mapFunction(entryPoint).resolved())
         else {
             // In a library every public function and every function accessible via virtual call belongs to the rootset.
             moduleDFG.symbolTable.functionMap.values.filter {
-                it is DataFlowIR.FunctionSymbol.Public
-                        || (it as? DataFlowIR.FunctionSymbol.External)?.isExported == true
+                (it is DataFlowIR.FunctionSymbol.Public && it.shouldExport())
+                        || ((it as? DataFlowIR.FunctionSymbol.External)?.let { it.isExported && it.shouldExport() } == true)
             } +
                     moduleDFG.symbolTable.classMap.values
                             .filterIsInstance<DataFlowIR.Type.Declared>()
@@ -107,7 +117,9 @@ internal object DevirtualizationAnalysis {
             }
         })
 
-        return (exported + globalInitializers + explicitlyExported + associatedObjectConstructors + leakingThroughFunctionReferences).distinct()
+        val distinctRootSet = (exported + globalInitializers + explicitlyExported + associatedObjectConstructors + leakingThroughFunctionReferences).distinct()
+        println("Found ${distinctRootSet.size} roots")
+        return distinctRootSet
     }
 
     fun BitSet.format(allTypes: Array<DataFlowIR.Type.Declared>): String {

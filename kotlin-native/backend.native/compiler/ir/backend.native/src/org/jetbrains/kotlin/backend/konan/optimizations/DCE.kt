@@ -105,6 +105,8 @@ internal fun dce(
         }
     })
 
+    println("${referencedFunctions.size} functions found during dead code elimination")
+
     return referencedFunctions
 }
 
