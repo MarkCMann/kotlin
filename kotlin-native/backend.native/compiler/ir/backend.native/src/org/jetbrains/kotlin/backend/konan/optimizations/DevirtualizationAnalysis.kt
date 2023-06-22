@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irBlock
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.ir.isBoxOrUnboxCall
+import org.jetbrains.kotlin.backend.konan.ir.konanLibrary
 import org.jetbrains.kotlin.backend.konan.util.IntArrayList
 import org.jetbrains.kotlin.backend.konan.util.LongArrayList
 import org.jetbrains.kotlin.backend.konan.lower.getObjectClassInstanceFunction
@@ -32,6 +33,8 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.konan.target.CompilerOutputKind
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import java.util.*
 import kotlin.collections.ArrayList
@@ -53,14 +56,23 @@ internal object DevirtualizationAnalysis {
             return this
         }
 
+        val exportedDeps = irModule.descriptor.getExportedDependencies(context.config).mapNotNull { it.konanLibrary }.toSet()
+        fun DataFlowIR.FunctionSymbol.isInExportedKlib(): Boolean {
+            return this.irFunction?.konanLibrary?.let { exportedDeps.contains(it) } != false
+        }
+
+        val hiddenFromObjCFqName = FqName("kotlin.native.HiddenFromObjC")
+        fun DataFlowIR.FunctionSymbol.isHiddenFromObjC(): Boolean {
+            return (this.irDeclaration?.parent as? IrClass)?.modality != org.jetbrains.kotlin.descriptors.Modality.ABSTRACT
+            && this.irDeclaration?.annotations?.any {
+                annotation -> annotation.symbol.owner.parentAsClass.fqNameWhenAvailable == hiddenFromObjCFqName
+            } == true
+        }
+
         fun DataFlowIR.FunctionSymbol.shouldExport(): Boolean {
             return !context.config.configuration.getBoolean(BinaryOptions.removeHiddenFromRootSet) ||
-                this.irDeclaration?.let {
-                    (it.annotations.any {
-                        annotation -> annotation.symbol.owner.parentAsClass.fqNameWhenAvailable?.toString() == "kotlin.native.HiddenFromObjC"
-                    } != true) || 
-                    ((it.parent as? IrClass)?.modality == org.jetbrains.kotlin.descriptors.Modality.ABSTRACT)
-                } == true
+                context.config.produce != CompilerOutputKind.FRAMEWORK ||
+                (this.isInExportedKlib() && !this.isHiddenFromObjC())
         }
 
         val entryPoint = context.ir.symbols.entryPoint?.owner
@@ -70,7 +82,7 @@ internal object DevirtualizationAnalysis {
             // In a library every public function and every function accessible via virtual call belongs to the rootset.
             moduleDFG.symbolTable.functionMap.values.filter {
                 (it is DataFlowIR.FunctionSymbol.Public && it.shouldExport())
-                        || ((it as? DataFlowIR.FunctionSymbol.External)?.let { it.isExported && it.shouldExport() } == true)
+                    || ((it as? DataFlowIR.FunctionSymbol.External)?.let { it.isExported && it.shouldExport() } == true)
             } +
                     moduleDFG.symbolTable.classMap.values
                             .filterIsInstance<DataFlowIR.Type.Declared>()
