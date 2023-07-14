@@ -63,7 +63,7 @@ public:
 
 private:
     // No need to check for external calls, because we explicitly ignore thread state.
-    static NO_EXTERNAL_CALLS_CHECK NO_INLINE void yield() {
+    static NO_EXTERNAL_CALLS_CHECK NO_INLINE void yield() noexcept {
         std::this_thread::yield();
     }
 };
@@ -158,7 +158,7 @@ private:
     }
 
     // No need to check for external calls, because we explicitly ignore thread state.
-    static NO_EXTERNAL_CALLS_CHECK NO_INLINE void yield() { std::this_thread::yield(); }
+    static NO_EXTERNAL_CALLS_CHECK NO_INLINE void yield() noexcept { std::this_thread::yield(); }
 
     static inline constexpr State kLocked = std::numeric_limits<State>::max();
     static_assert(kLocked % 2 == 1, "Must be odd");

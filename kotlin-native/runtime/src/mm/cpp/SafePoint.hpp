@@ -13,23 +13,10 @@ namespace kotlin::mm {
 
 class ThreadData;
 
-class SafePointActivator : private MoveOnly {
+class SafePointActivator : private Pinned {
 public:
     SafePointActivator() noexcept;
     ~SafePointActivator();
-
-    SafePointActivator(SafePointActivator&& rhs) noexcept : active_(rhs.active_) { rhs.active_ = false; }
-
-    SafePointActivator& operator=(SafePointActivator&& rhs) noexcept {
-        SafePointActivator other(std::move(rhs));
-        swap(other);
-        return *this;
-    }
-
-    void swap(SafePointActivator& rhs) noexcept { std::swap(active_, rhs.active_); }
-
-private:
-    bool active_;
 };
 
 void safePoint() noexcept;

@@ -81,7 +81,7 @@ bool kotlin::mm::RequestThreadsSuspension() noexcept {
         if (internal::gSuspensionRequested.load(std::memory_order_relaxed)) {
             return false;
         }
-        gSafePointActivator = mm::SafePointActivator();
+        gSafePointActivator.emplace();
         internal::gSuspensionRequested.store(true);
     }
 
@@ -90,14 +90,14 @@ bool kotlin::mm::RequestThreadsSuspension() noexcept {
 
 void kotlin::mm::WaitForThreadsSuspension() noexcept {
     // Spin waiting for threads to suspend. Ignore Native threads.
-    while (!allThreads([](mm::ThreadData& thread) { return thread.suspensionData().suspendedOrNative(); })) {
+    while (!allThreads([](mm::ThreadData& thread) noexcept { return thread.suspensionData().suspendedOrNative(); })) {
         yield();
     }
 }
 
 void kotlin::mm::ResumeThreads() noexcept {
     RuntimeAssert(gSafePointActivator != std::nullopt, "Current thread must have suspended threads");
-    gSafePointActivator = std::nullopt;
+    gSafePointActivator.reset();
 
     // From the std::condition_variable docs:
     // Even if the shared variable is atomic, it must be modified under

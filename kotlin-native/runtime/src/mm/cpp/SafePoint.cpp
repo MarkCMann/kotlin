@@ -18,7 +18,7 @@ namespace {
 
 [[clang::no_destroy]] std::mutex safePointActionMutex;
 int64_t activeCount = 0;
-std::atomic<void (*)(mm::ThreadData&)> safePointAction = nullptr;
+std::atomic<void (*)(mm::ThreadData&) noexcept> safePointAction = nullptr;
 
 void safePointActionImpl(mm::ThreadData& threadData) noexcept {
     static thread_local bool recursion = false;
@@ -68,14 +68,14 @@ void decrementActiveCount() noexcept {
 
 } // namespace
 
-mm::SafePointActivator::SafePointActivator() noexcept : active_(true) {
+mm::SafePointActivator::SafePointActivator() noexcept /*: active_(true)*/ {
     incrementActiveCount();
 }
 
 mm::SafePointActivator::~SafePointActivator() {
-    if (active_) {
+    //if (active_) {
         decrementActiveCount();
-    }
+    //}
 }
 
 ALWAYS_INLINE void mm::safePoint() noexcept {

@@ -72,7 +72,7 @@ constexpr RuntimeState* kInvalidRuntime = nullptr;
 
 THREAD_LOCAL_VARIABLE RuntimeState* runtimeState = kInvalidRuntime;
 
-inline bool isValidRuntime() {
+inline bool isValidRuntime() noexcept {
   return ::runtimeState != kInvalidRuntime;
 }
 
@@ -206,11 +206,15 @@ RUNTIME_NOTHROW void AppendToInitializersTail(InitNode *next) {
   initTailNode = next;
 }
 
+RUNTIME_NOTHROW void Kotlin_doInitRuntime() {
+  initRuntime();
+  // Register runtime deinit function at thread cleanup.
+  konan::onThreadExit(Kotlin_deinitRuntimeCallback, runtimeState);
+}
+
 RUNTIME_NOTHROW void Kotlin_initRuntimeIfNeeded() {
-  if (!isValidRuntime()) {
-    initRuntime();
-    // Register runtime deinit function at thread cleanup.
-    konan::onThreadExit(Kotlin_deinitRuntimeCallback, runtimeState);
+  if (__builtin_expect(!isValidRuntime(), false)) {
+    Kotlin_doInitRuntime();
   }
 }
 
