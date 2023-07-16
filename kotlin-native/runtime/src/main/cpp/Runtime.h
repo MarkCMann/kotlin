@@ -32,7 +32,7 @@ void Kotlin_shutdownRuntime();
 RUNTIME_NOTHROW void AppendToInitializersTail(struct InitNode*);
 
 void CallInitGlobalPossiblyLock(int* state, void (*init)());
-void CallInitThreadLocal(int volatile* globalState, int* localState, void (*init)());
+void CallInitThreadLocal(int* globalState, int* localState, void (*init)());
 
 bool Kotlin_memoryLeakCheckerEnabled();
 

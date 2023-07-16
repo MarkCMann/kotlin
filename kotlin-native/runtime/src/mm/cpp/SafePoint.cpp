@@ -38,11 +38,11 @@ ALWAYS_INLINE void slowPathImpl(mm::ThreadData& threadData) noexcept {
     }
 }
 
-NO_INLINE void slowPath() noexcept {
+__attribute__((cold)) NO_INLINE void slowPath() noexcept {
     slowPathImpl(*mm::ThreadRegistry::Instance().CurrentThreadData());
 }
 
-NO_INLINE void slowPath(mm::ThreadData& threadData) noexcept {
+__attribute__((cold)) NO_INLINE void slowPath(mm::ThreadData& threadData) noexcept {
     slowPathImpl(threadData);
 }
 
@@ -68,14 +68,12 @@ void decrementActiveCount() noexcept {
 
 } // namespace
 
-mm::SafePointActivator::SafePointActivator() noexcept /*: active_(true)*/ {
+mm::SafePointActivator::SafePointActivator() noexcept {
     incrementActiveCount();
 }
 
 mm::SafePointActivator::~SafePointActivator() {
-    //if (active_) {
-        decrementActiveCount();
-    //}
+    decrementActiveCount();
 }
 
 ALWAYS_INLINE void mm::safePoint() noexcept {
