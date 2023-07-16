@@ -206,7 +206,7 @@ RUNTIME_NOTHROW void AppendToInitializersTail(InitNode *next) {
   initTailNode = next;
 }
 
-RUNTIME_NOTHROW void Kotlin_doInitRuntime() {
+__attribute__((cold)) RUNTIME_NOTHROW void Kotlin_doInitRuntime() {
   initRuntime();
   // Register runtime deinit function at thread cleanup.
   konan::onThreadExit(Kotlin_deinitRuntimeCallback, runtimeState);
