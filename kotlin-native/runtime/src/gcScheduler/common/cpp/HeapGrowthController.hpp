@@ -20,14 +20,14 @@ public:
     explicit HeapGrowthController(GCSchedulerConfig& config) noexcept : config_(config) {}
 
     // Called by the mutators.
-    void OnAllocated(size_t allocatedBytes) noexcept { allocatedBytes_ += allocatedBytes; }
+    void OnAllocated(size_t allocatedBytes) noexcept { allocatedBytes_.fetch_add(allocatedBytes, std::memory_order_relaxed); }
 
     // Called by the GC thread.
-    void OnPerformFullGC() noexcept { allocatedBytes_ = 0; }
+    void OnPerformFullGC() noexcept { allocatedBytes_.store(0, std::memory_order_relaxed); }
 
     // Called by the GC thread.
     void UpdateAliveSetBytes(size_t bytes) noexcept {
-        lastAliveSetBytes_ = bytes;
+        lastAliveSetBytes_.store(bytes, std::memory_order_relaxed);
 
         if (config_.autoTune.load()) {
             double targetHeapBytes = static_cast<double>(bytes) / config_.targetHeapUtilization;
@@ -44,8 +44,8 @@ public:
 
     // Called by the mutators.
     bool NeedsGC() const noexcept {
-        uint64_t currentHeapBytes = allocatedBytes_.load() + lastAliveSetBytes_.load();
-        uint64_t targetHeapBytes = config_.targetHeapBytes;
+        uint64_t currentHeapBytes = allocatedBytes_.load(std::memory_order_relaxed) + lastAliveSetBytes_.load(std::memory_order_relaxed);
+        uint64_t targetHeapBytes = config_.targetHeapBytes.load(std::memory_order_relaxed);
         return currentHeapBytes >= targetHeapBytes;
     }
 

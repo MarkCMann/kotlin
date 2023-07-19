@@ -57,14 +57,14 @@ kotlin::ThreadState kotlin::mm::ThreadSuspensionData::setState(kotlin::ThreadSta
 }
 
 NO_EXTERNAL_CALLS_CHECK void kotlin::mm::ThreadSuspensionData::suspendIfRequested() noexcept {
-    if (IsThreadSuspensionRequested()) {
+    if (internal::gSuspensionRequested.load(std::memory_order_relaxed)) {
         threadData_.gc().OnSuspendForGC();
         std::unique_lock lock(gSuspensionMutex);
         auto threadId = konan::currentThreadId();
         auto suspendStartMs = konan::getTimeMicros();
         RuntimeLogDebug({kTagGC, kTagMM}, "Suspending thread %d", threadId);
         AutoReset scopedAssignSuspended(&suspended_, true);
-        gSuspensionCondVar.wait(lock, []() { return !IsThreadSuspensionRequested(); });
+        gSuspensionCondVar.wait(lock, []() noexcept { return !internal::gSuspensionRequested.load(std::memory_order_relaxed); });
         auto suspendEndMs = konan::getTimeMicros();
         RuntimeLogDebug({kTagGC, kTagMM}, "Resuming thread %d after %" PRIu64 " microseconds of suspension",
                         threadId, suspendEndMs - suspendStartMs);
@@ -77,12 +77,14 @@ bool kotlin::mm::RequestThreadsSuspension() noexcept {
     RuntimeAssert(gSafePointActivator == std::nullopt, "Current thread already suspended threads.");
     {
         std::unique_lock lock(gSuspensionMutex);
-        // Someone else has already suspended threads.
-        if (internal::gSuspensionRequested.load(std::memory_order_relaxed)) {
+        // Set flag first since threads will start checking the flag
+        // after gSafePointActivator is constructed.
+        bool expected = false;
+        if (!internal::gSuspensionRequested.compare_exchange_strong(expected, true)) {
+            // Someone else has already suspended threads.
             return false;
         }
         gSafePointActivator.emplace();
-        internal::gSuspensionRequested.store(true);
     }
 
     return true;

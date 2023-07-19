@@ -17,16 +17,17 @@
 
 namespace kotlin::gcScheduler::internal {
 
-template <typename Clock>
+template <typename Clock, typename ScheduleFunc>
 class GCSchedulerDataAdaptive : public GCSchedulerData {
 public:
-    GCSchedulerDataAdaptive(GCSchedulerConfig& config, std::function<void()> scheduleGC) noexcept :
+    template <typename TScheduleFunc>
+    GCSchedulerDataAdaptive(GCSchedulerConfig& config, TScheduleFunc&& scheduleGC) noexcept :
         config_(config),
-        scheduleGC_(std::move(scheduleGC)),
+        scheduleGC_(std::forward<TScheduleFunc>(scheduleGC)),
         appStateTracking_(mm::GlobalData::Instance().appStateTracking()),
         heapGrowthController_(config),
         regularIntervalPacer_(config),
-        timer_("GC Timer thread", config_.regularGcInterval(), [this] {
+        timer_("GC Timer thread", config_.regularGcInterval(), [this]() noexcept(noexcept(scheduleGC_())) {
             if (appStateTracking_.state() == mm::AppStateTracking::State::kBackground) {
                 return;
             }
@@ -40,7 +41,7 @@ public:
 
     void UpdateFromThreadData(GCSchedulerThreadData& threadData) noexcept override {
         heapGrowthController_.OnAllocated(threadData.allocatedBytes());
-        if (heapGrowthController_.NeedsGC()) {
+        if (__builtin_expect(heapGrowthController_.NeedsGC(), false)) {
             RuntimeLogDebug({kTagGC}, "Scheduling GC by allocation");
             scheduleGC_();
         }
@@ -56,7 +57,7 @@ public:
 
 private:
     GCSchedulerConfig& config_;
-    std::function<void()> scheduleGC_;
+    ScheduleFunc scheduleGC_;
     mm::AppStateTracking& appStateTracking_;
     HeapGrowthController heapGrowthController_;
     RegularIntervalPacer<Clock> regularIntervalPacer_;

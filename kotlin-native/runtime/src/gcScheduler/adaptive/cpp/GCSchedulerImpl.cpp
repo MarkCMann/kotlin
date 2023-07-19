@@ -13,8 +13,19 @@
 
 using namespace kotlin;
 
+template <typename Clock, typename F>
+using GCSchedulerDataAdaptive = kotlin::gcScheduler::internal::GCSchedulerDataAdaptive<Clock, F>;
+
+template <typename F>
+auto make_unique_GCSchedulerDataAdaptive(kotlin::gcScheduler::GCSchedulerConfig& config, F&& scheduleGC) noexcept {
+    return std_support::make_unique<GCSchedulerDataAdaptive<steady_clock, F>>(
+        config,
+        std::forward<F>(scheduleGC)
+    );
+}
+
 gcScheduler::GCScheduler::GCScheduler() noexcept :
-    gcData_(std_support::make_unique<internal::GCSchedulerDataAdaptive<steady_clock>>(config_, []() noexcept {
+    gcData_(make_unique_GCSchedulerDataAdaptive(config_, []() noexcept {
         // This call acquires a lock, but the lock are always short-lived,
         // so we ignore thread state switching to avoid recursive safe points.
         CallsCheckerIgnoreGuard guard;

@@ -18,7 +18,7 @@ namespace {
 
 [[clang::no_destroy]] std::mutex safePointActionMutex;
 int64_t activeCount = 0;
-std::atomic<void (*)(mm::ThreadData&) noexcept> safePointAction = nullptr;
+std::atomic<bool> safePointsActivated = false;
 
 void safePointActionImpl(mm::ThreadData& threadData) noexcept {
     static thread_local bool recursion = false;
@@ -31,10 +31,9 @@ void safePointActionImpl(mm::ThreadData& threadData) noexcept {
 }
 
 ALWAYS_INLINE void slowPathImpl(mm::ThreadData& threadData) noexcept {
-    // reread an action to avoid register pollution outside the function
-    auto action = safePointAction.load(std::memory_order_seq_cst);
-    if (action != nullptr) {
-        action(threadData);
+    // reread flag to avoid register pollution outside the function
+    if (safePointsActivated.load(std::memory_order_seq_cst)) {
+        safePointActionImpl(threadData);
     }
 }
 
@@ -51,8 +50,8 @@ void incrementActiveCount() noexcept {
     ++activeCount;
     RuntimeAssert(activeCount >= 1, "Unexpected activeCount: %" PRId64, activeCount);
     if (activeCount == 1) {
-        auto prev = safePointAction.exchange(safePointActionImpl, std::memory_order_seq_cst);
-        RuntimeAssert(prev == nullptr, "Action cannot have been set. Was %p", prev);
+        auto prev = safePointsActivated.exchange(true, std::memory_order_seq_cst);
+        RuntimeAssert(!prev, "Safe points must not have been activated.");
     }
 }
 
@@ -61,8 +60,8 @@ void decrementActiveCount() noexcept {
     --activeCount;
     RuntimeAssert(activeCount >= 0, "Unexpected activeCount: %" PRId64, activeCount);
     if (activeCount == 0) {
-        auto prev = safePointAction.exchange(nullptr, std::memory_order_seq_cst);
-        RuntimeAssert(prev == safePointActionImpl, "Action must have been %p. Was %p", safePointActionImpl, prev);
+        auto prev = safePointsActivated.exchange(false, std::memory_order_seq_cst);
+        RuntimeAssert(prev, "Safe points must have been activated previously.");
     }
 }
 
@@ -78,16 +77,16 @@ mm::SafePointActivator::~SafePointActivator() {
 
 ALWAYS_INLINE void mm::safePoint() noexcept {
     AssertThreadState(ThreadState::kRunnable);
-    auto action = safePointAction.load(std::memory_order_relaxed);
-    if (__builtin_expect(action != nullptr, false)) {
+    auto safePointsActivatedRelaxed = safePointsActivated.load(std::memory_order_relaxed);
+    if (__builtin_expect(safePointsActivatedRelaxed, false)) {
         slowPath();
     }
 }
 
 ALWAYS_INLINE void mm::safePoint(mm::ThreadData& threadData) noexcept {
     AssertThreadState(&threadData, ThreadState::kRunnable);
-    auto action = safePointAction.load(std::memory_order_relaxed);
-    if (__builtin_expect(action != nullptr, false)) {
+    auto safePointsActivatedRelaxed = safePointsActivated.load(std::memory_order_relaxed);
+    if (__builtin_expect(safePointsActivatedRelaxed, false)) {
         slowPath(threadData);
     }
 }

@@ -72,7 +72,7 @@ public:
 private:
     std_support::vector<std_support::unique_ptr<MutatorThread>> mutators_;
     testing::MockFunction<void()> scheduleGC_;
-    gcScheduler::internal::GCSchedulerDataAdaptive<test_support::manual_clock> scheduler_;
+    gcScheduler::internal::GCSchedulerDataAdaptive<test_support::manual_clock, decltype(scheduleGC_.AsStdFunction())> scheduler_;
 };
 
 } // namespace

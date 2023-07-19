@@ -23,7 +23,7 @@ extern std::atomic<bool> gSuspensionRequested;
 
 inline bool IsThreadSuspensionRequested() noexcept {
     // TODO: Consider using a more relaxed memory order.
-    return internal::gSuspensionRequested.load();
+    return internal::gSuspensionRequested.load(std::memory_order_relaxed);
 }
 
 class ThreadSuspensionData : private Pinned {
