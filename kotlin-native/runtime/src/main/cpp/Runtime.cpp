@@ -212,7 +212,7 @@ __attribute__((cold)) RUNTIME_NOTHROW void Kotlin_doInitRuntime() {
   konan::onThreadExit(Kotlin_deinitRuntimeCallback, runtimeState);
 }
 
-RUNTIME_NOTHROW void Kotlin_initRuntimeIfNeeded() {
+__attribute__((always_inline)) RUNTIME_NOTHROW void Kotlin_initRuntimeIfNeeded() {
   if (__builtin_expect(!isValidRuntime(), false)) {
     Kotlin_doInitRuntime();
   }
