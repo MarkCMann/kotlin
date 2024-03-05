@@ -29,6 +29,8 @@ native {
     val obj = if (HostManager.hostIsMingw) "obj" else "o"
     val cxxflags = mutableListOf(
         "--std=c++17",
+        "-O3",
+        "-g",
         "-I${llvmDir}/include",
         "-Isrc/main/include"
     )
