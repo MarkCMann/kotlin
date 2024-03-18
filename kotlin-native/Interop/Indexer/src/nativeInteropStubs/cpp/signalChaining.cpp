@@ -5,6 +5,7 @@
 #endif
 #include <stdio.h>
 #include <signal.h>
+#include <exception>
 
 extern "C" void clang_toggleCrashRecovery(unsigned isEnabled);
 
@@ -17,15 +18,21 @@ struct {
   bool isSigaction;
 } oldSignalHandlers[sizeof(signalsToCover)/sizeof(signalsToCover[0])] = { 0 };
 
-static int mySigaction(int sig, const struct sigaction *act, struct sigaction * oact) {
-  for (int i = 0; i < sizeof(signalsToCover)/sizeof(signalsToCover[0]); i++) {
-    if (sig == signalsToCover[i]) return 0;
-  }
-  return sigaction(sig, act, oact);
+extern "C" int mySigaction(int sig, const struct sigaction *act, struct sigaction * oact);
+
+__attribute__((visibility("default"))) extern "C" int sigaction(int sig, const struct sigaction *act, struct sigaction * oact) {
+  return mySigaction(sig, act, oact);
 }
 
+// static int mySigaction(int sig, const struct sigaction *act, struct sigaction * oact) {
+//   for (int i = 0; i < sizeof(signalsToCover)/sizeof(signalsToCover[0]); i++) {
+//     if (sig == signalsToCover[i]) return 0;
+//   }
+//   return sigaction(sig, act, oact);
+// }
+
 static void checkSignalChaining() {
-   struct sigaction oact;
+   struct sigaction oact = {0};
    clang_toggleCrashRecovery(1);
    for (int i = 0; i < sizeof(signalsToCover)/sizeof(signalsToCover[0]); i++) {
      int sig = signalsToCover[i];
@@ -36,7 +43,6 @@ static void checkSignalChaining() {
          continue;
        }
        if (oldSignalHandlers[i].handler != (void*)oact.sa_handler) {
-         fprintf(stderr, "ERROR: improperly changed signal handler for %d\n", sig);
          continue;
        }
      } else {
@@ -61,12 +67,8 @@ static void checkSignalChaining() {
 
 __attribute__((constructor))
 static void initSignalChaining() {
-  void** base = 0;
-  Dl_info info;
-
   for (int i = 0; i < sizeof(signalsToCover)/sizeof(signalsToCover[0]); i++) {
-    struct sigaction oact;
-    int sig = signalsToCover[i];
+    struct sigaction oact = {0};
     if (sigaction(signalsToCover[i], nullptr, &oact) == 0) {
       if ((oact.sa_flags & SA_SIGINFO) == 0) {
         oldSignalHandlers[i] = {(void*)oact.sa_handler, false};
@@ -76,9 +78,10 @@ static void initSignalChaining() {
     }
   }
 
-
-  if (dladdr((void*)&clang_toggleCrashRecovery, &info) == 0) return;
-  base = (void**)info.dli_fbase;
+  // void** base = 0;
+  // Dl_info info;
+  // if (dladdr((void*)&clang_toggleCrashRecovery, &info) == 0) return;
+  // base = (void**)info.dli_fbase;
 
   // Force resolving of lazy symbols.
   clang_toggleCrashRecovery(1);
@@ -93,16 +96,16 @@ static void initSignalChaining() {
      base = (void**)linkmap->l_ld;
   }
 #endif
-  for (int index = 0, patched = 0; patched < 1; index++) {
-    void* value = base[index];
-    if (value == &sigaction) {
-        base[index] = (void*)mySigaction;
-        patched++;
-    }
-    if (value == mySigaction) {
-        patched++;
-    }
-  }
+  // for (int index = 0, patched = 0; patched < 1; index++) {
+  //   void* value = base[index];
+  //   if (value == &sigaction) {
+  //       base[index] = (void*)mySigaction;
+  //       patched++;
+  //   }
+  //   if (value == mySigaction) {
+  //       patched++;
+  //   }
+  // }
 
   checkSignalChaining();
 }

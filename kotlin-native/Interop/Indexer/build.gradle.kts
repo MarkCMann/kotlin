@@ -5,6 +5,7 @@
 
 import org.jetbrains.kotlin.tools.lib
 import org.jetbrains.kotlin.tools.solib
+import org.jetbrains.kotlin.tools.ToolExecutionTask
 import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jetbrains.kotlin.konan.target.*
@@ -32,9 +33,11 @@ val libclang =
 
 val cflags = mutableListOf( "-I${nativeDependencies.llvmPath}/include",
         "-I${project(":kotlin-native:libclangext").projectDir.absolutePath}/src/main/include",
+        "-fvisibility=hidden", "-O3", "-flto=thin",
                             *platformManager.hostPlatform.clangForJni.hostCompilerArgsForJni)
 
-val ldflags = mutableListOf("${nativeDependencies.llvmPath}/$libclang", "-L${libclangextDir.absolutePath}", "-lclangext")
+// val ldflags = mutableListOf("${nativeDependencies.llvmPath}/lib/libclang.dylib", "-L${libclangextDir.absolutePath}", "-lclangext")
+val ldflags = mutableListOf("-L${libclangextDir.absolutePath}", "-lclangext")
 
 if (libclangextIsEnabled) {
     assert(HostManager.hostIsMac)
@@ -69,11 +72,247 @@ if (libclangextIsEnabled) {
             "clangToolingCore",
             "clangTooling", "clangFormat", "LLVMTarget", "LLVMMC", "LLVMLinker", "LLVMTransformUtils",
             "LLVMBitWriter", "LLVMBitReader", "LLVMAnalysis", "LLVMProfileData", "LLVMCore",
-            "LLVMSupport", "LLVMBinaryFormat", "LLVMDemangle"
+            "LLVMSupport", "LLVMBinaryFormat", "LLVMDemangle",
+            
+
+
+            "LLVMAArch64AsmParser",
+"LLVMAArch64CodeGen",
+"LLVMAArch64Desc",
+"LLVMAArch64Disassembler",
+"LLVMAArch64Info",
+"LLVMAArch64Utils",
+"LLVMAMDGPUAsmParser",
+"LLVMAMDGPUCodeGen",
+"LLVMAMDGPUDesc",
+"LLVMAMDGPUDisassembler",
+"LLVMAMDGPUInfo",
+"LLVMAMDGPUTargetMCA",
+"LLVMAMDGPUUtils",
+"LLVMARMAsmParser",
+"LLVMARMCodeGen",
+"LLVMARMDesc",
+"LLVMARMDisassembler",
+"LLVMARMInfo",
+"LLVMARMUtils",
+"LLVMAVRAsmParser",
+"LLVMAVRCodeGen",
+"LLVMAVRDesc",
+"LLVMAVRDisassembler",
+"LLVMAVRInfo",
+"LLVMAggressiveInstCombine",
+"LLVMAnalysis",
+"LLVMAsmParser",
+"LLVMAsmPrinter",
+"LLVMBPFAsmParser",
+"LLVMBPFCodeGen",
+"LLVMBPFDesc",
+"LLVMBPFDisassembler",
+"LLVMBPFInfo",
+"LLVMBinaryFormat",
+"LLVMBitReader",
+"LLVMBitWriter",
+"LLVMBitstreamReader",
+"LLVMCAS",
+"LLVMCFGuard",
+"LLVMCFIVerify",
+"LLVMCodeGen",
+"LLVMCore",
+"LLVMCoroutines",
+"LLVMCoverage",
+"LLVMDWARFLinker",
+"LLVMDWP",
+"LLVMDebugInfoCodeView",
+"LLVMDebugInfoDWARF",
+"LLVMDebugInfoGSYM",
+"LLVMDebugInfoMSF",
+"LLVMDebugInfoPDB",
+"LLVMDebuginfod",
+"LLVMDemangle",
+"LLVMDiff",
+"LLVMDlltoolDriver",
+"LLVMExecutionEngine",
+"LLVMExegesis",
+"LLVMExegesisAArch64",
+"LLVMExegesisMips",
+"LLVMExegesisPowerPC",
+"LLVMExegesisX86",
+"LLVMExtensions",
+"LLVMFileCheck",
+"LLVMFrontendOpenACC",
+"LLVMFrontendOpenMP",
+"LLVMFuzzMutate",
+"LLVMGlobalISel",
+"LLVMHexagonAsmParser",
+"LLVMHexagonCodeGen",
+"LLVMHexagonDesc",
+"LLVMHexagonDisassembler",
+"LLVMHexagonInfo",
+"LLVMIRReader",
+"LLVMInstCombine",
+"LLVMInstrumentation",
+"LLVMInterfaceStub",
+"LLVMInterpreter",
+"LLVMJITLink",
+"LLVMLTO",
+"LLVMLanaiAsmParser",
+"LLVMLanaiCodeGen",
+"LLVMLanaiDesc",
+"LLVMLanaiDisassembler",
+"LLVMLanaiInfo",
+"LLVMLibDriver",
+"LLVMLineEditor",
+"LLVMLinker",
+"LLVMMC",
+"LLVMMCA",
+"LLVMMCDisassembler",
+"LLVMMCJIT",
+"LLVMMCParser",
+"LLVMMIRParser",
+"LLVMMSP430AsmParser",
+"LLVMMSP430CodeGen",
+"LLVMMSP430Desc",
+"LLVMMSP430Disassembler",
+"LLVMMSP430Info",
+"LLVMMipsAsmParser",
+"LLVMMipsCodeGen",
+"LLVMMipsDesc",
+"LLVMMipsDisassembler",
+"LLVMMipsInfo",
+"LLVMNVPTXCodeGen",
+"LLVMNVPTXDesc",
+"LLVMNVPTXInfo",
+"LLVMObjCARCOpts",
+"LLVMObjCopy",
+"LLVMObject",
+"LLVMObjectYAML",
+"LLVMOption",
+"LLVMOrcJIT",
+"LLVMOrcShared",
+"LLVMOrcTargetProcess",
+"LLVMPasses",
+"LLVMPowerPCAsmParser",
+"LLVMPowerPCCodeGen",
+"LLVMPowerPCDesc",
+"LLVMPowerPCDisassembler",
+"LLVMPowerPCInfo",
+"LLVMProfileData",
+"LLVMRISCVAsmParser",
+"LLVMRISCVCodeGen",
+"LLVMRISCVDesc",
+"LLVMRISCVDisassembler",
+"LLVMRISCVInfo",
+"LLVMRemarks",
+"LLVMRemoteCachingService",
+"LLVMRemoteNullService",
+"LLVMRuntimeDyld",
+"LLVMScalarOpts",
+"LLVMSelectionDAG",
+"LLVMSparcAsmParser",
+"LLVMSparcCodeGen",
+"LLVMSparcDesc",
+"LLVMSparcDisassembler",
+"LLVMSparcInfo",
+"LLVMSupport",
+"LLVMSymbolize",
+"LLVMSystemZAsmParser",
+"LLVMSystemZCodeGen",
+"LLVMSystemZDesc",
+"LLVMSystemZDisassembler",
+"LLVMSystemZInfo",
+"LLVMTableGen",
+"LLVMTableGenGlobalISel",
+"LLVMTarget",
+"LLVMTextAPI",
+"LLVMTransformUtils",
+"LLVMVEAsmParser",
+"LLVMVECodeGen",
+"LLVMVEDesc",
+"LLVMVEDisassembler",
+"LLVMVEInfo",
+"LLVMVectorize",
+"LLVMWebAssemblyAsmParser",
+"LLVMWebAssemblyCodeGen",
+"LLVMWebAssemblyDesc",
+"LLVMWebAssemblyDisassembler",
+"LLVMWebAssemblyInfo",
+"LLVMWebAssemblyUtils",
+"LLVMWindowsDriver",
+"LLVMWindowsManifest",
+"LLVMX86AsmParser",
+"LLVMX86CodeGen",
+"LLVMX86Desc",
+"LLVMX86Disassembler",
+"LLVMX86Info",
+"LLVMX86TargetMCA",
+"LLVMXCoreCodeGen",
+"LLVMXCoreDesc",
+"LLVMXCoreDisassembler",
+"LLVMXCoreInfo",
+"LLVMXRay",
+"LLVMipo",
+"c++",
+"c++abi",
+"c++experimental",
+"clang",
+"clangAPINotes",
+"clangARCMigrate",
+"clangAST",
+"clangASTMatchers",
+"clangAnalysis",
+"clangAnalysisFlowSensitive",
+"clangAnalysisFlowSensitiveModels",
+"clangBasic",
+"clangCAS",
+"clangCodeGen",
+"clangCrossTU",
+"clangDependencyScanning",
+"clangDirectoryWatcher",
+"clangDriver",
+"clangDynamicASTMatchers",
+"clangEdit",
+"clangExtractAPI",
+"clangFormat",
+"clangFrontend",
+"clangFrontendTool",
+"clangHandleCXX",
+"clangHandleLLVM",
+"clangIndex",
+"clangIndexDataStore",
+"clangIndexSerialization",
+"clangInterpreter",
+"clangLex",
+"clangParse",
+"clangRewrite",
+"clangRewriteFrontend",
+"clangSema",
+"clangSerialization",
+"clangStaticAnalyzerCheckers",
+"clangStaticAnalyzerCore",
+"clangStaticAnalyzerFrontend",
+"clangSupport",
+"clangTooling",
+"clangToolingASTDiff",
+"clangToolingCore",
+"clangToolingInclusions",
+"clangToolingRefactor",
+"clangToolingRefactoring",
+"clangToolingSyntax",
+"clangTransformer",
+"lldCOFF",
+"lldCommon",
+"lldELF",
+"lldMachO",
+"lldMinGW",
+"lldWasm",
     ).map { "${nativeDependencies.llvmPath}/lib/lib${it}.a" }
 
     ldflags.addAll(llvmLibs)
     ldflags.addAll(listOf("-lpthread", "-lz", "-lm", "-lcurses"))
+    ldflags.add("-Wl,-exported_symbols_list,clang.list")
+    //ldflags.add("-Wl,-dead_strip")
+    //ldflags.add("-flto=thin")
+    ldflags.addAll(listOf("-target", "arm64-apple-macos14.0"))
 }
 
 val solib = when{
@@ -97,30 +336,57 @@ native {
             tool(*hostPlatform.clangForJni.clangCXX("").toTypedArray())
             flags(*cxxflags.toTypedArray(), "-c", "-o", ruleOut(), ruleInFirst())
         }
-
     }
     sourceSet {
         "main-c" {
             dir("prebuilt/nativeInteropStubs/c")
         }
         "main-cpp" {
-            dir("src/nativeInteropStubs/cpp")
+            file("src/nativeInteropStubs/cpp/signalChaining.cpp")
+            file("src/nativeInteropStubs/cpp/disable-abi-checks.cpp")
+            //dir("src/nativeInteropStubs/cpp")
+        }
+        "sigaction-proxy" {
+            file("src/nativeInteropStubs/cpp/sigactionProxy.cpp")
         }
     }
     val objSet = arrayOf(sourceSets["main-c"]!!.transform(".c" to ".$obj"),
                          sourceSets["main-cpp"]!!.transform(".cpp" to ".$obj"))
 
-    target(solib("clangstubs"), *objSet) {
+    target("preclangstubs.o", *objSet) {
         tool(*hostPlatform.clangForJni.clangCXX("").toTypedArray())
+        flags(
+            // "-shared",
+            "-Wl,-r",
+            "-Wl,-U,_mySigaction",
+            "-o", ruleOut(), *ruleInAll(),
+            *ldflags.toTypedArray())
+    }
+
+    val proxyObjs = arrayOf(sourceSets["sigaction-proxy"]!!.transform(".cpp" to ".$obj"))
+    target(solib("clangstubs"), *proxyObjs) {
+        tool(*hostPlatform.clangForJni.clangCXX("").toTypedArray())
+        // val linkerFlags = listOf(
+        //     "-lpthread", "-lz", "-lm", "-lcurses",
+        //     "-Wl,-exported_symbols_list,clang.list",
+        //     "-Wl,--no-demangle",
+        //     "-Wl,-search_paths_first",
+        //     "-Wl,-headerpad_max_install_names", 
+        //     "-Wl,-U,_futimens", 
+        //     //"-flto=thin", 
+        //     "-target", "arm64-apple-macos14.0",
+        //     "-Wl,-dead_strip")
         flags(
             "-shared",
             "-o", ruleOut(), *ruleInAll(),
+            (tasks.named("preclangstubs.o").get() as ToolExecutionTask).output.path,
             *ldflags.toTypedArray())
     }
 }
 
 tasks.named(solib("clangstubs")).configure {
     dependsOn(":kotlin-native:libclangext:${lib("clangext")}")
+    dependsOn("preclangstubs.o")
 }
 
 sourceSets {

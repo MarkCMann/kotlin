@@ -155,7 +155,10 @@ def construct_cmake_flags(
                 '-DCOMPILER_RT_ENABLE_TVOS=OFF',
             ])
         else:
+            #cmake_args.append("-DLLVM_ENABLE_LTO=Thin")
+            cmake_args.append("-DLIBCLANG_BUILD_STATIC=ON")
             cmake_args.append('-DLIBCXX_USE_COMPILER_RT=ON')
+            cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE=ON')
 
     if install_path is not None:
         cmake_args.append('-DCMAKE_INSTALL_PREFIX=' + install_path)
@@ -326,8 +329,8 @@ def build_distribution(args):
         building_final = stage == num_stages
 
         if building_bootstrap:
-            # We only need a host target to start a bootstrap.
-            targets = [host_llvm_target()]
+            # We need host target to start a bootstrap.
+            targets = [host_llvm_target()]#, "X86","ARM","AArch64"]
         else:
             # None targets means all available targets.
             targets = None
@@ -339,7 +342,7 @@ def build_distribution(args):
             intermediate_build_results.append(install_path)
             build_targets = ["install"]
 
-        projects = ["clang", "lld", "libcxx", "libcxxabi", "compiler-rt"]
+        projects = ["clang", "lld", "libcxx", "libcxxabi"]#, "compiler-rt"]
         runtimes = None
 
         build_dir = force_create_directory(current_dir, f"llvm-stage-{stage}-build")

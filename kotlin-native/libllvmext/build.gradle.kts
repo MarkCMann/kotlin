@@ -30,6 +30,7 @@ native {
     val cxxflags = mutableListOf(
         "--std=c++17",
         "-O3",
+        "-flto=thin",
         "-g",
         "-I${llvmDir}/include",
         "-Isrc/main/include"

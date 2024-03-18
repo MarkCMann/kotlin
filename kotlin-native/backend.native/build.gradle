@@ -109,6 +109,8 @@ kotlinNativeInterop {
         linker 'clang++'
         link configurations.commonFilesBitcode
 
+        //dependsOn ":kotlin-native:Interop:clangstubs.dylib"
+
         // TODO: These should come from some sort of commonFilesApi configuration
         headers fileTree('../common/src/files/headers') {
             include '**/*.h'
@@ -122,6 +124,8 @@ kotlinNativeInterop {
     env {
         linker 'clang++'
         link configurations.commonEnvBitcode
+
+        dependsOn ":kotlin-native:Interop:Indexer:preclangstubs.o"
 
         // TODO: These should come from some sort of commonEnvApi configuration
         headers fileTree('../common/src/env/headers') {

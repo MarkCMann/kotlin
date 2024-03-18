@@ -42,6 +42,7 @@ val targetList: List<String> by project
 bitcode {
     allTargets {
         module("main") {
+            compilerArgs.add("-Wno-deprecated-declarations")
             headersDirs.from("src/externalCallsChecker/common/cpp", "src/objcExport/cpp")
             sourceSets {
                 main {
@@ -327,6 +328,7 @@ bitcode {
         }
 
         module("same_thread_ms_gc") {
+            compilerArgs.add("-Wno-deprecated-copy")
             srcRoot.set(layout.projectDirectory.dir("src/gc/stms"))
             headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/externalCallsChecker/common/cpp", "src/objcExport/cpp", "src/main/cpp", "src/alloc/legacy/cpp"))
             sourceSets {
@@ -348,6 +350,7 @@ bitcode {
                 test {}
             }
 
+            compilerArgs.add("-Wno-deprecated-copy")
             compilerArgs.add("-DCUSTOM_ALLOCATOR")
         }
 
@@ -357,6 +360,7 @@ bitcode {
         }
 
         module("pmcs_gc") {
+            compilerArgs.add("-Wno-deprecated-copy")
             srcRoot.set(layout.projectDirectory.dir("src/gc/pmcs"))
             headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/externalCallsChecker/common/cpp", "src/objcExport/cpp", "src/main/cpp", "src/alloc/legacy/cpp"))
             sourceSets {
@@ -388,6 +392,7 @@ bitcode {
 
         module("concurrent_ms_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/cms"))
+            compilerArgs.add("-Wno-deprecated-copy")
             headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/externalCallsChecker/common/cpp", "src/objcExport/cpp", "src/main/cpp", "src/alloc/legacy/cpp"))
             sourceSets {
                 main {}
