@@ -56,7 +56,10 @@ internal object DevirtualizationAnalysis {
             return this
         }
 
-        val exportedDeps = irModule.descriptor.getExportedDependencies(context.config).mapNotNull { it.konanLibrary }.toSet()
+        val exportedDeps by lazy {
+            irModule.descriptor.getExportedDependencies(context.config).mapNotNull { it.konanLibrary }.toSet()
+        }
+
         fun DataFlowIR.FunctionSymbol.isInExportedKlib(): Boolean {
             return this.irFunction?.konanLibrary?.let { exportedDeps.contains(it) } != false
         }
@@ -64,9 +67,7 @@ internal object DevirtualizationAnalysis {
         val hiddenFromObjCFqName = FqName("kotlin.native.HiddenFromObjC")
         fun DataFlowIR.FunctionSymbol.isHiddenFromObjC(): Boolean {
             return (this.irDeclaration?.parent as? IrClass)?.modality != org.jetbrains.kotlin.descriptors.Modality.ABSTRACT
-            && this.irDeclaration?.annotations?.any {
-                annotation -> annotation.symbol.owner.parentAsClass.fqNameWhenAvailable == hiddenFromObjCFqName
-            } == true
+                && this.irDeclaration?.hasAnnotation(hiddenFromObjCFqName) == true
         }
 
         fun DataFlowIR.FunctionSymbol.shouldExport(): Boolean {
